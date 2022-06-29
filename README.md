@@ -10,6 +10,21 @@ implement [trojan protocol](https://trojan-gfw.github.io/trojan/protocol) in gol
   - [ ] udp
 - autocert
   - [x] ZeroSSL with cf DNS 
-- [x] website
+- other
+  - [x] website
   
-# docker compose
+## docker compose
+```yaml
+version: '3'
+services:
+  trojan:
+    image: ghcr.io/togls/trojan-go:master
+    ports:
+      - 443:443
+    volumes:
+      - certs:/root/.local/share
+      - /path/to/site:/var/www/site
+      - /path/to/config.json:/etc/trojan-go/config.json
+volumes:
+  certs:
+```
