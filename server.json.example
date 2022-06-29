@@ -1,0 +1,24 @@
+{
+    "run_type": "server",
+    "local_addr": "0.0.0.0",
+    "local_port": 443,
+    "password": [
+        "your password"
+    ],
+    "ssl": {
+        "cert": "/path/to/cert.crt",
+        "key": "/path/to/cert.key",
+        "alpn": [
+            "h2",
+            "http/1.1"
+        ]
+    },
+    "autocert": {
+        "enabled": true,
+        "domain": "your domain",
+        "email": "your email",
+        "path": "/certs",
+        "cf_token": "your cloudflare token"
+    },
+    "web_root": "/var/www/site"
+}
