@@ -22,7 +22,6 @@ import (
 func TlsConfig(ctx context.Context, cfg *Config) (*tls.Config, error) {
 	c := &tls.Config{}
 	if !cfg.AutoCert.Enabled {
-
 		cert, err := loadKeyPair(cfg.SSL.Cert, cfg.SSL.Key, cfg.SSL.KeyPassword)
 		if err != nil {
 			return nil, fmt.Errorf("tls config, %w", err)
@@ -116,7 +115,7 @@ func TlsConfig(ctx context.Context, cfg *Config) (*tls.Config, error) {
 	if cfg.SSL != nil && cfg.SSL.Alpn != nil {
 		c.NextProtos = append(cfg.SSL.Alpn, c.NextProtos...)
 	}
-	c.MinVersion = tls.VersionTLS13
+	// c.MinVersion = tls.VersionTLS13
 
 	return c, nil
 }

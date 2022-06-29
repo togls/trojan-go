@@ -3,7 +3,6 @@ package trojan
 import (
 	"context"
 	"crypto/tls"
-	"errors"
 	"fmt"
 	"net"
 
@@ -63,9 +62,11 @@ func (s *Server) Serve(ctx context.Context) {
 		}
 
 		go func() {
-			err := s.handleConn(conn)
+			err := s.handleConn(ctx, conn)
 			if err != nil {
-				log.Err(err).Msg("handle conn err")
+				log.Err(err).
+					Str("remote", conn.RemoteAddr().String()).
+					Msg("handle conn failed")
 			}
 		}()
 	}
@@ -75,20 +76,20 @@ func (s *Server) Other() net.Listener {
 	return s.http
 }
 
-var ErrAuthFailed = errors.New("err auth failed")
-
-func (s *Server) handleConn(c net.Conn) error {
+func (s *Server) handleConn(ctx context.Context, c net.Conn) error {
 	conn := newBufConn(c)
 
 	err := conn.Auth(s.authenticator)
 	if err != nil {
 		select {
+		case <-ctx.Done():
+			return ctx.Err()
 		case s.http.conn <- conn:
 		case <-s.http.done:
 			_ = conn.Close()
 		}
 
-		return ErrAuthFailed
+		return fmt.Errorf("auth failed: %w", err)
 	}
 	defer conn.Close()
 
@@ -96,21 +97,27 @@ func (s *Server) handleConn(c net.Conn) error {
 	case CmdConnect:
 		rc, err := net.Dial("tcp", conn.addr.String())
 		if err != nil {
-			log.Err(err).Msg("dial target err")
-			return nil
+			return fmt.Errorf("dial target: %w", err)
 		}
 		defer rc.Close()
 
-		err = relay(conn, rc)
+		rn, sn, err := relay(conn, rc)
 		if err != nil {
-			log.Err(err).Msg("relay err")
-			return err
+			return fmt.Errorf("relay tcp, target=%s: %w", conn.addr, err)
 		}
+
+		log.Info().
+			Str("remote", conn.RemoteAddr().String()).
+			Str("target", conn.addr.String()).
+			Int64("recv", rn).
+			Int64("send", sn).
+			Msg("relay success")
+
 	case CmdUDPAssociate:
 		// TODO: support udp
 		fallthrough
 	default:
-		log.Err(err).Msg("unknown cmd")
+		return fmt.Errorf("unknown cmd: %w", err)
 	}
 
 	return nil
