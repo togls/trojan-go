@@ -40,14 +40,24 @@ func (conn *bufConn) stopBuffing() {
 	conn.buff.reset(false)
 }
 
-func (conn *bufConn) Auth(authenticator Authenticator) error {
+func (conn *bufConn) notBuffing() {
+	conn.buff.stop()
+}
+
+func (conn *bufConn) Auth(authenticator Authenticator) (err error) {
 	conn.startBuffing()
-	defer conn.stopBuffing()
+	defer func() {
+		if err != nil {
+			conn.stopBuffing()
+		} else {
+			conn.notBuffing()
+		}
+	}()
 
 	var pw [56]byte
-	_, err := io.ReadFull(conn, pw[:])
+	_, err = io.ReadFull(conn, pw[:])
 	if err != nil {
-		return fmt.Errorf("read password, %w", err)
+		return fmt.Errorf("read password: %w", err)
 	}
 
 	user, ok := authenticator.Auth(pw[:])
@@ -62,27 +72,27 @@ func (conn *bufConn) Auth(authenticator Authenticator) error {
 	// crlf
 	_, err = io.ReadFull(conn, crlf[:])
 	if err != nil {
-		return fmt.Errorf("read crlf, %w", err)
+		return fmt.Errorf("read crlf: %w", err)
 	}
 
 	// cmd
 	_, err = io.ReadFull(conn, cmd[:])
 	if err != nil {
-		return fmt.Errorf("read command, %w", err)
+		return fmt.Errorf("read command: %w", err)
 	}
 	conn.cmd = Command(cmd[0])
 
 	// dst addr and port
 	addr, err := ReadAddr(conn)
 	if err != nil {
-		return fmt.Errorf("read address, %w", err)
+		return fmt.Errorf("read address: %w", err)
 	}
 	conn.addr = addr
 
 	// crlf
 	_, err = io.ReadFull(conn, crlf[:])
 	if err != nil {
-		return fmt.Errorf("read crlf, %w", err)
+		return fmt.Errorf("read crlf: %w", err)
 	}
 
 	return nil
@@ -121,5 +131,11 @@ func (buf *bufferedReader) Read(b []byte) (int, error) {
 func (buf *bufferedReader) reset(buffing bool) {
 	buf.buffing = buffing
 	buf.read = 0
+	buf.size = buf.buffer.Len()
+}
+
+func (buf *bufferedReader) stop() {
+	buf.buffing = false
+	buf.read = buf.buffer.Len()
 	buf.size = buf.buffer.Len()
 }
