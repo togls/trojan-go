@@ -25,7 +25,7 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
 FROM alpine:${ALPINE_VERSION}
 
 ENV TZ=Asia/Shanghai
-COPY --from=builder /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 
 COPY --from=builder /app/trojan-go /usr/local/bin/trojan-go
 COPY --from=builder /app/server.json /etc/trojan-go/config.json
