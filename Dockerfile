@@ -17,7 +17,6 @@ RUN go mod download
 
 RUN --mount=type=cache,target=/root/.cache/go-build \
     CGO_ENABLED=0 \
-    GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
     go build --trimpath --ldflags "-w -s" \
     -o /app/trojan-go \
     cmd/trojan/main.go
