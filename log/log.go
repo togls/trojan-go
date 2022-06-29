@@ -51,8 +51,7 @@ func Hook(h zerolog.Hook) zerolog.Logger {
 //
 // You must call Msg on the returned event in order to send the event.
 func Err(err error) *zerolog.Event {
-	l := Logger.With().Caller().Logger()
-	return l.Err(err)
+	return Logger.Err(err)
 }
 
 // Trace starts a new message with trace level.
