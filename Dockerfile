@@ -28,6 +28,6 @@ ENV TZ=Asia/Shanghai
 COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 
 COPY --from=builder /app/trojan-go /usr/local/bin/trojan-go
-COPY --from=builder /app/server.json /etc/trojan-go/config.json
+COPY --from=builder /app/server.json.example /etc/trojan-go/config.json
 
 CMD ["/usr/local/bin/trojan-go", "-c", "/etc/trojan-go/config.json"]
