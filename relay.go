@@ -15,7 +15,6 @@ import (
 // relay copies between left and right bidirectionally
 func relay(left, right net.Conn) (received, sent int64, err error) {
 	var rerr, serr error
-	wait := 5 * time.Second
 	wg := &sync.WaitGroup{}
 
 	wg.Add(1)
@@ -23,11 +22,11 @@ func relay(left, right net.Conn) (received, sent int64, err error) {
 		defer wg.Done()
 
 		received, rerr = io.Copy(left, right)
-		left.SetReadDeadline(time.Now().Add(wait))
+		left.SetReadDeadline(time.Now())
 	}()
 
 	sent, serr = io.Copy(right, left)
-	right.SetReadDeadline(time.Now().Add(wait))
+	right.SetReadDeadline(time.Now())
 
 	wg.Wait()
 
