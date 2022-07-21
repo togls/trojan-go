@@ -47,29 +47,41 @@ func NewServer(addr string, tlsConfig *tls.Config, auth Authenticator) (*Server,
 
 func (s *Server) Serve(ctx context.Context) {
 	log.Info().Msg("server started")
-
-	for {
-		select {
-		case <-ctx.Done():
-			s.http.Close()
-			return
-		default:
-		}
-
-		conn, err := s.ln.Accept()
-		if err != nil {
-			continue
-		}
-
-		go func() {
-			err := s.handleConn(ctx, conn)
-			if err != nil {
-				log.Err(err).
-					Str("remote", conn.RemoteAddr().String()).
-					Msg("handle conn failed")
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				s.http.Close()
+				return
+			default:
 			}
-		}()
-	}
+
+			conn, err := s.ln.Accept()
+			if err != nil {
+				continue
+			}
+
+			go func() {
+				var err error
+				defer func() {
+					if err != nil {
+						if strings.Contains(err.Error(), "auth failed") {
+							return // ignore auth failed, handled by http server
+						}
+
+						log.Error().
+							Err(err).
+							Str("remote", conn.RemoteAddr().String()).
+							Msg("handle conn failed")
+					}
+
+					conn.Close()
+				}()
+
+				err = s.handleConn(ctx, conn)
+			}()
+		}
+	}()
 }
 
 func (s *Server) Other() net.Listener {
@@ -82,16 +94,14 @@ func (s *Server) handleConn(ctx context.Context, c net.Conn) error {
 	err := conn.Auth(s.authenticator)
 	if err != nil {
 		select {
+		case s.http.conn <- conn:
+			return fmt.Errorf("auth failed: %w", err)
 		case <-ctx.Done():
 			return ctx.Err()
-		case s.http.conn <- conn:
 		case <-s.http.done:
-			_ = conn.Close()
+			return errors.New("http server closed")
 		}
-
-		return fmt.Errorf("auth failed: %w", err)
 	}
-	defer conn.Close()
 
 	switch conn.cmd {
 	case CmdConnect:

@@ -73,12 +73,14 @@ func main() {
 			log.Fatal(err)
 		}
 
-		go trojan.HttpServer(cfg, s.Other())
+		trojan.HttpServer(cfg, s.Other())
 
 		s.Serve(ctx)
 	default:
 		log.Fatal("unspported run type")
 	}
+
+	<-ctx.Done()
 }
 
 func defaultConfigFile() (string, error) {

@@ -1,7 +1,6 @@
 package trojan
 
 import (
-	stdLog "log"
 	"net"
 	"net/http"
 
@@ -17,11 +16,12 @@ func HttpServer(cfg *Config, ln net.Listener) {
 	h2s := &http2.Server{}
 
 	s := &http.Server{
-		Handler:  h2c.NewHandler(h, h2s),
-		ErrorLog: stdLog.New(stdLog.Writer(), "http", 0),
+		Handler: h2c.NewHandler(h, h2s),
 	}
 
-	if err := s.Serve(ln); err != nil {
-		log.Err(err).Msg("http server error")
-	}
+	go func() {
+		if err := s.Serve(ln); err != nil {
+			log.Error().Err(err).Msg("http server")
+		}
+	}()
 }
