@@ -89,7 +89,16 @@ func (s *Server) Other() net.Listener {
 }
 
 func (s *Server) handleConn(ctx context.Context, c net.Conn) error {
-	conn := newBufConn(c)
+	tc, ok := c.(*tls.Conn)
+	if !ok {
+		return errors.New("not a tls conn")
+	}
+
+	if err := tc.Handshake(); err != nil {
+		return fmt.Errorf("handshake: %w", err)
+	}
+
+	conn := newBufConn(tc)
 
 	err := conn.Auth(s.authenticator)
 	if err != nil {
