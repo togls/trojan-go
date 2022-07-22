@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 
 	"github.com/rs/zerolog"
 )
@@ -13,10 +14,20 @@ import (
 var Logger = defaultLogger()
 
 func defaultLogger() zerolog.Logger {
+	l := os.Getenv("LOG_LEVEL")
+	if l == "" {
+		l = "info"
+	}
+
+	level, err := zerolog.ParseLevel(l)
+	if err != nil {
+		level = zerolog.InfoLevel
+	}
+
 	out := zerolog.NewConsoleWriter()
 
 	return zerolog.New(out).
-		Level(zerolog.DebugLevel).
+		Level(level).
 		With().Timestamp().
 		Logger()
 }
