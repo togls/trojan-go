@@ -25,6 +25,7 @@ func defaultLogger() zerolog.Logger {
 	}
 
 	out := zerolog.NewConsoleWriter()
+	out.TimeFormat = "01-02 15:04:05"
 
 	return zerolog.New(out).
 		Level(level).

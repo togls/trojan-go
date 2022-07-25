@@ -104,7 +104,7 @@ func TlsConfig(ctx context.Context, cfg *Config) (*tls.Config, error) {
 
 	domains := []string{cfg.AutoCert.Domain}
 
-	log.Info().Msgf("start attain cert for %s", domains)
+	log.Log().Msgf("attain cert for %s", domains)
 
 	if err := magic.ManageSync(ctx, domains); err != nil {
 		return nil, fmt.Errorf("manage sync, %w", err)

@@ -48,7 +48,10 @@ func NewServer(addr string, tlsConfig *tls.Config, auth Authenticator) (*Server,
 }
 
 func (s *Server) Serve(ctx context.Context) {
-	log.Info().Msg("server started")
+	log.Log().
+		Str("addr", s.ln.Addr().String()).
+		Msg("server started")
+
 	go func() {
 		for {
 			select {
