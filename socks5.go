@@ -67,6 +67,29 @@ func (a Addr) String() string {
 	return net.JoinHostPort(host, port)
 }
 
+func (a Addr) ToUDPAddr() *net.UDPAddr {
+
+	switch a[0] {
+	case AtypDomainName:
+		return &net.UDPAddr{
+			IP:   net.ParseIP(string(a[2 : 2+int(a[1])])),
+			Port: int(a[2+int(a[1])])<<8 | int(a[2+int(a[1])+1]),
+		}
+	case AtypIPv4:
+		return &net.UDPAddr{
+			IP:   net.IP(a[1 : 1+net.IPv4len]),
+			Port: int(a[1+net.IPv4len])<<8 | int(a[1+net.IPv4len+1]),
+		}
+	case AtypIPv6:
+		return &net.UDPAddr{
+			IP:   net.IP(a[1 : 1+net.IPv6len]),
+			Port: int(a[1+net.IPv6len])<<8 | int(a[1+net.IPv6len+1]),
+		}
+	}
+
+	return nil
+}
+
 func readAddr(r io.Reader, b []byte) (Addr, error) {
 	if len(b) < MaxAddrLen {
 		return nil, io.ErrShortBuffer

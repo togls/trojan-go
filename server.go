@@ -3,8 +3,10 @@ package trojan
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"net"
+	"strings"
 
 	"github.com/togls/trojan-go/log"
 )
@@ -133,8 +135,18 @@ func (s *Server) handleConn(ctx context.Context, c net.Conn) error {
 			Msg("relay success")
 
 	case CmdUDPAssociate:
-		// TODO: support udp
-		fallthrough
+		rn, sn, err := relayUDP(ctx, conn)
+		if err != nil {
+			return fmt.Errorf("relay udp, target=%s: %w", conn.addr, err)
+		}
+
+		log.Info().
+			Str("remote", conn.RemoteAddr().String()).
+			Str("target", conn.addr.String()).
+			Int64("recv", rn).
+			Int64("send", sn).
+			Msg("relay udp success")
+
 	default:
 		return fmt.Errorf("unknown cmd: %w", err)
 	}

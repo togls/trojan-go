@@ -7,7 +7,7 @@ implement [trojan protocol](https://trojan-gfw.github.io/trojan/protocol) in gol
   - [ ] forward
 - relay
   - [x] tcp
-  - [ ] udp
+  - [x] udp
 - autocert
   - [x] ZeroSSL with cf DNS 
 - other
